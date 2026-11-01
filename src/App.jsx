@@ -13,12 +13,12 @@ function App() {
     <>
       <div className="min-h-screen bg-[#ECFDF5] p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
-          <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8'>
+          <div className='flex flex-col sm:flex-row sm:justify-between items-center sm:items-center gap-4 mb-8 text-center sm:text-left'>
             <div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-[#115E59]">Studently.</h1>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-[#115E59]">CampusHub</h1>
               <p className='text-teal-600 mt-1'>Student Management Dashboard</p>
             </div>
-            <div className='bg-white px-5 py-3 rounded-2xl shadow-sm'>
+            <div className='bg-white px-11 py-3 sm:px-5 rounded-2xl shadow-sm'>
               <p className='text-sm text-teal-500'>Welcome Back!</p>
               <p className='font-bold text-[#115E59]'>Admin Dashboard✨</p>
             </div>
