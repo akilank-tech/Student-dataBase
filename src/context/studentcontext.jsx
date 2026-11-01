@@ -4,7 +4,7 @@ import axios from "axios"
 const StudentContext = createContext()
 
 const Studentcontext = (props) => {
-    const API = "http://localhost:5000"
+    const API = "https://student-database-backend-1-281z.onrender.com"
 
     const [students, setStudents] = useState([])
     const [name, setName] = useState("")
