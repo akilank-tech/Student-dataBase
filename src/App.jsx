@@ -184,7 +184,7 @@ function App() {
           </div>
           
           <div className='text-center py-8 text-teal-500 text-sm'>
-            Made With 💜 Studently Management System
+            Made With 💜 CampusHub Management System
           </div>
         </div>
       </div>
