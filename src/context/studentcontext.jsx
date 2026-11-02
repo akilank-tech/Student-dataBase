@@ -61,13 +61,19 @@ const Studentcontext = (props) => {
         }
     }
 
-    const updateStudent = (id) => {
+        const updateStudent = (id, studentData) => {
         axios.put(`${API}/update/${id}`, {
-            status: "Completed"
+            name: studentData?.name,
+            age: Number(studentData?.age),
+            course: studentData?.course,
+            status: studentData?.status
         })
             .then(() => {
-                setMessage("Student status updated!")
+                setMessage("Student updated successfully!")
                 getStudents()
+            })
+            .catch(() => {
+                setMessage("Unable to update student")
             })
     }
 
