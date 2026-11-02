@@ -4,7 +4,9 @@ import { StudentContext } from './context/studentcontext'
 
 function App() {
   const { students, name, setName, age, setAge, course, setCourse, status,
-    setStatus, search, setSearch, message, setMessage, getStudents, addStudent, deleteStudent,
+    setStatus, search, setSearch, message, setMessage, addMessage, setAddMessage,
+    recordsMessage, setRecordsMessage,
+    getStudents, addStudent, deleteStudent,
     updateStudent, updateAll, deleteAll, searchStudents, operatorSearch,
     activeCount, completedCount } = useContext(StudentContext)
 
@@ -34,22 +36,65 @@ function App() {
     setEditStatus('Active')
   }
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault()
-    if (editId) {
-      updateStudent(editId, {
-        name: editName,
-        age: Number(editAge),
-        course: editCourse,
-        status: editStatus
-      })
+    if (!editId) return
+
+    const updated = await updateStudent(editId, {
+      name: editName,
+      age: Number(editAge),
+      course: editCourse,
+      status: editStatus
+    })
+    if (updated) {
+      closeEditModal()
     }
-    closeEditModal()
   }
 
   const handleAddSubmit = (e) => {
     addStudent(e)
   }
+
+  const activeStudents = students.filter((student) => student.status !== "Completed")
+  const completedStudents = students.filter((student) => student.status === "Completed")
+
+  const renderStudentCards = (studentList) => (
+    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+      {studentList.map((student) => (
+        <div className='border border-teal-100 bg-[#FCFAFF] p-5 rounded-2xl hover:shadow-md transition' key={student._id}>
+          <div className='flex justify-between items-start gap-3'>
+            <div>
+              <h3 className='text-lg font-bold text-[#115E59]'>{student.name}</h3>
+              <p className='text-teal-500 text-sm mt-1'>Student ID:{student._id ? student._id.slice(-6) : 'N/A'}</p>
+            </div>
+            <span className={`text-xs font-bold px-3 py-2 rounded-full ${student.status === "Completed"
+              ? "bg-green-100 text-green-700" : "bg-teal-100 text-teal-700"
+              }`}>{student.status}</span>
+          </div>
+          <div className='mt-4 space-y-2 text-sm text-gray-600'>
+            <p>🎂 Age:{student.age}</p>
+            <p>📚 Course:{student.course}</p>
+          </div>
+          <div className='flex gap-2 mt-5'>
+            <button onClick={() => openEditModal(student)}
+              className='student-action-button flex-1 bg-[#CCFBF1] text-teal-900 py-2 rounded-lg text-sm font-semibold hover:bg-[#99F6E4]'>
+              Edit
+            </button>
+            {student.status !== "Completed" && (
+              <button onClick={() => updateStudent(student._id, { status: "Completed" })}
+                className='student-action-button flex-1 bg-[#0D9488] text-white py-2 rounded-lg text-sm font-semibold'>
+                Complete
+              </button>
+            )}
+            <button onClick={() => deleteStudent(student._id)}
+              className='student-action-button flex-1 bg-red-100 text-red-600 py-2 rounded-lg text-sm font-semibold'>
+              Delete
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 
   return (
     <>
@@ -119,6 +164,14 @@ function App() {
               <button type='submit' className='mt-6 w-full sm:w-auto bg-[#0F766E] hover:bg-[#115E59] text-white font-bold px-8
                 py-3 rounded-xl transition cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200'>+ Add Student</button>
             </form>
+            {addMessage && (
+              <div role='status' className='mt-4 flex items-center justify-between text-green-700 font-semibold'>
+                <span>{addMessage}</span>
+                <button type='button' aria-label='Close success message'
+                  className='ml-4 font-bold cursor-pointer hover:text-green-900 active:scale-95 transition-transform duration-150'
+                  onClick={() => setAddMessage('')}>X</button>
+              </div>
+            )}
           </div>
 
           <div className='bg-white rounded-3xl p-5 md:p-8 shadow-sm mb-8'>
@@ -200,7 +253,15 @@ function App() {
                 </button>
                 </div>
             </div>
-            
+            {recordsMessage && (
+              <div role='status' className='bg-[#CCFBF1] text-teal-900 p-3 rounded-xl mb-5 font-medium flex items-center justify-between'>
+                <span>{recordsMessage}</span>
+                <button type='button' aria-label='Close success message'
+                  className='ml-4 font-bold cursor-pointer hover:text-teal-700 active:scale-95 transition-transform duration-150'
+                  onClick={() => setRecordsMessage('')}>X</button>
+              </div>
+            )}
+
             {students.length === 0 ?(
               <div className='text-center py-12'>
                 <p className='text-5xl mb-3'>🎓</p>
@@ -208,37 +269,19 @@ function App() {
                 <p className='text-teal-500 mt-2'>Add a new student to see records here.</p>
               </div>
             ):(
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                {students.map((student)=>(<div className='border border-teal-100 bg-[#FCFAFF] p-5 rounded-2xl hover:shadow-md transition' key={student._id}>
-                  <div className='flex justify-between items-start gap-3'>
-                    <div>
-                      <h3 className='text-lg font-bold text-[#115E59]'>{student.name}</h3>
-                      <p className='text-teal-500 text-sm mt-1'>Student ID:{student._id ? student._id.slice(-6) : 'N/A'}</p>
-                    </div>
-                    <span className={`text-xs font-bold px-3 py-2 rounded-full ${student.status === "Completed"
-                      ?"bg-green-100 text-green-700":"bg-teal-100 text-teal-700"
-                    }`}>{student.status}</span>
-              
-                  </div>
-                  <div className='mt-4 space-y-2 text-sm text-gray-600'>
-                    <p>🎂 Age:{student.age}</p>
-                    <p>📚 Course:{student.course}</p>
-                  </div>
-                  <div className='flex gap-2 mt-5'>
-                    <button onClick={() => openEditModal(student)}
-                      className='flex-1 bg-[#CCFBF1] text-teal-900 py-2 rounded-lg text-sm font-semibold hover:bg-[#99F6E4] cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200'>
-                        Edit
-                      </button>
-                    {student.status !== "Completed" && ( <button onClick={()=>updateStudent(student._id)}
-                      className='flex-1 bg-[#0D9488] text-white py-2 rounded-lg text-sm font-semibold cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200'>
-                        Complete
-                      </button>)}
-                      <button onClick={()=>deleteStudent(student._id)}
-                        className='flex-1 bg-red-100 text-red-600 py-2 rounded-lg text-sm font-semibold cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200'>
-                          Delete
-                        </button>
-                  </div>
-                </div>))}
+              <div className='space-y-8'>
+                <section>
+                  <h3 className='text-lg font-bold text-[#115E59] mb-4'>Active Students</h3>
+                  {activeStudents.length > 0
+                    ? renderStudentCards(activeStudents)
+                    : <p className='text-teal-500 text-sm'>No active students.</p>}
+                </section>
+                <section>
+                  <h3 className='text-lg font-bold text-[#115E59] mb-4'>Completed Students</h3>
+                  {completedStudents.length > 0
+                    ? renderStudentCards(completedStudents)
+                    : <p className='text-teal-500 text-sm'>No completed students.</p>}
+                </section>
               </div>
             )}
           </div>
@@ -249,7 +292,6 @@ function App() {
               <div className='bg-white rounded-2xl p-6 md:p-8 w-full max-w-md mx-4 shadow-xl transform transition scale-100' onClick={(e) => e.stopPropagation()}>
                 <div className='flex justify-between items-center mb-6'>
                   <h3 className='text-xl font-bold text-[#115E59]'>✏️ Edit Student</h3>
-                  <button onClick={closeEditModal} className='text-teal-500 hover:text-teal-700 font-bold text-xl cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200'>✕</button>
                 </div>
                 <form onSubmit={handleEditSubmit}>
                   <div className='space-y-4'>

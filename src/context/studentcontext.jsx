@@ -4,7 +4,7 @@ import axios from "axios"
 const StudentContext = createContext()
 
 const Studentcontext = (props) => {
-    const API = "https://student-database-backend-1-281z.onrender.com"
+    const API = import.meta.env.VITE_API_URL
 
     const [students, setStudents] = useState([])
     const [name, setName] = useState("")
@@ -13,14 +13,28 @@ const Studentcontext = (props) => {
     const [status, setStatus] = useState("Active")
     const [search, setSearch] = useState("")
     const [message, setMessage] = useState("")
+    const [addMessage, setAddMessage] = useState("")
+    const [recordsMessage, setRecordsMessage] = useState("")
 
-    const getStudents = () => {
-        axios.get(`${API}/students`)
-            .then((data) => {
-                setStudents(data.data)
-            }).catch(() => {
-                setMessage("Unable to connect to server")
-            })
+    const getStudents = async () => {
+        if (!API) {
+            setMessage("Student API URL is not configured. Set VITE_API_URL and restart the frontend.")
+            return null
+        }
+
+        try {
+            const { data } = await axios.get(`${API}/students`)
+            if (!Array.isArray(data)) {
+                throw new Error("The student API returned an invalid records response.")
+            }
+            setStudents(data)
+            return data
+        } catch (error) {
+            const responseMessage = error.response?.data?.message
+                || (typeof error.response?.data === "string" ? error.response.data : "")
+            setMessage(responseMessage || error.message || "Unable to connect to server")
+            return null
+        }
     }
     useEffect(() => {
         getStudents()
@@ -32,6 +46,7 @@ const Studentcontext = (props) => {
             setMessage("Please fill all fields")
             return
         }
+        setAddMessage("")
         axios.post(`${API}/addstudent`, {
             name: name,
             age: Number(age),
@@ -42,8 +57,8 @@ const Studentcontext = (props) => {
             setAge("")
             setCourse("MERN Stack")
             setStatus("Active")
-
-            setMessage("Student added successfully!")
+            setMessage("")
+            setAddMessage("Student Added Successfully!")
             getStudents()
         }).catch(() => {
             setMessage("Unable to add student")
@@ -61,20 +76,52 @@ const Studentcontext = (props) => {
         }
     }
 
-        const updateStudent = (id, studentData) => {
-        axios.put(`${API}/update/${id}`, {
-            name: studentData?.name,
-            age: Number(studentData?.age),
-            course: studentData?.course,
-            status: studentData?.status
-        })
-            .then(() => {
-                setMessage("Student updated successfully!")
-                getStudents()
-            })
-            .catch(() => {
-                setMessage("Unable to update student")
-            })
+    const updateStudent = async (id, studentData) => {
+        const updates = { ...studentData }
+        if (studentData?.age !== undefined) {
+            updates.age = Number(studentData.age)
+        }
+
+        try {
+            if (!API) {
+                throw new Error("Student API URL is not configured.")
+            }
+
+            const { data: responseData } = await axios.put(`${API}/update/${id}`, updates)
+            let savedStudent = responseData?.student || responseData?.data || responseData
+            const returnedId = savedStudent?._id || savedStudent?.id
+
+            if (returnedId && String(returnedId) !== String(id)) {
+                throw new Error("The server returned a different student record.")
+            }
+
+            if (!returnedId) {
+                const { data: refreshedStudents } = await axios.get(`${API}/students`)
+                if (!Array.isArray(refreshedStudents)) {
+                    throw new Error("The server returned an invalid student list.")
+                }
+                savedStudent = refreshedStudents.find(
+                    (student) => String(student._id || student.id) === String(id)
+                )
+                if (!savedStudent) {
+                    throw new Error("The updated student could not be found.")
+                }
+            }
+
+            setStudents((currentStudents) => currentStudents.map((student) =>
+                String(student._id || student.id) === String(id)
+                    ? { ...student, ...savedStudent, ...updates }
+                    : student
+            ))
+            setMessage("")
+            setRecordsMessage("Student Updated Successfully!")
+            return true
+        } catch (error) {
+            const responseMessage = error.response?.data?.message
+                || (typeof error.response?.data === "string" ? error.response.data : "")
+            setMessage(responseMessage || error.message || "Unable to update student")
+            return false
+        }
     }
 
     const updateAll = () => {
@@ -133,7 +180,9 @@ const Studentcontext = (props) => {
     return (
         <StudentContext.Provider value={{
             students, name, setName, age, setAge, course, setCourse, status,
-            setStatus, search, setSearch, message, setMessage, getStudents, addStudent, deleteStudent
+            setStatus, search, setSearch, message, setMessage,
+            addMessage, setAddMessage, recordsMessage, setRecordsMessage,
+            getStudents, addStudent, deleteStudent
             , updateStudent, updateAll, deleteAll, searchStudents, operatorSearch,
             activeCount, completedCount
         }}>

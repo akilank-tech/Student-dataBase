@@ -1,1 +1,21 @@
 @import 'tailwindcss';
+
+.student-action-button {
+  cursor: pointer;
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.student-action-button:hover {
+  transform: scale(1.03);
+  filter: brightness(0.97);
+}
+
+.student-action-button:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .student-action-button {
+    transition: none;
+  }
+}
