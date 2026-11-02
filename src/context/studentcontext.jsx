@@ -4,7 +4,7 @@ import axios from "axios"
 const StudentContext = createContext()
 
 const Studentcontext = (props) => {
-    const API = import.meta.env.VITE_API_URL
+    const API = import.meta.env.VITE_API_URL || "https://student-database-backend-1-281z.onrender.com"
 
     const [students, setStudents] = useState([])
     const [name, setName] = useState("")
